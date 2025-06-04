@@ -1,10 +1,60 @@
 package interval
 
 import (
+	"errors"
 	"fmt"
 	"slices"
 	"strings"
 )
+
+// Slice(text) = text[Start:End], if valid range
+//
+// Returns the substring corresponding to the interval [Start, End).
+// Returns an error if the interval is out of bounds.
+func (iv IntegerInterval) Slice(text string) (string, error) {
+	if !iv.IsValid() || iv.Start < 0 || iv.End > len(text) {
+		return "", errors.New("out of range")
+	}
+	return text[iv.Start:iv.End], nil
+}
+
+// Replace replaces the interval [Start, End) in text with replacement.
+func (iv IntegerInterval) Replace(text, replacement string) (string, error) {
+	if !iv.IsValid() || iv.Start < 0 || iv.End > len(text) {
+		return "", errors.New("out of range")
+	}
+	return text[:iv.Start] + replacement + text[iv.End:], nil
+}
+
+// Remove removes the interval [Start, End) from text.
+func (iv IntegerInterval) Remove(text string) (string, error) {
+	return iv.Replace(text, "")
+}
+
+// Insert inserts a string at position Start (End is ignored).
+func (iv IntegerInterval) Insert(text, insert string) (string, error) {
+	if !iv.IsValid() || iv.Start < 0 || iv.Start > len(text) {
+		return "", errors.New("invalid insert position")
+	}
+	return text[:iv.Start] + insert + text[iv.Start:], nil
+}
+
+// ExtractSlices returns a slice of substrings from `text`
+// corresponding to each interval in the set.
+// Returns an error if any interval is out of range.
+func (set IntervalSet) ExtractSlices(text string) ([]string, error) {
+	result := make([]string, 0, len(set))
+	for _, iv := range set {
+		if !iv.IsValid() || iv.Start < 0 || iv.End > len(text) {
+			return nil, fmt.Errorf("interval %v out of range", iv)
+		}
+		part := text[iv.Start:iv.End]
+		result = append(result, part)
+	}
+	return result, nil
+}
+
+// IntegerInterval represents a [start, end) interval of byte]()
 
 // 数学的には[Start, End)と表される。文字列を扱うときのindexに適合する。
 // "abc" 全体 → [0,3)
@@ -52,7 +102,7 @@ func (iv IntegerInterval) Intersect(other IntegerInterval) (IntegerInterval, boo
 // Merge(other) = [Start, End) ∪ [other.Start, other.End), if Overlaps or IsAdjacent
 func (iv IntegerInterval) Merge(other IntegerInterval) (IntegerInterval, bool) {
 	if iv.End < other.Start || other.End < iv.Start {
-		// 完全に離れていればマージ不可（接してない）
+		// 完全に離れていればマージ不可（接してない）。離れている場合はスライスにすべき。
 		return IntegerInterval{}, false
 	}
 	start := min(iv.Start, other.Start)
