@@ -262,7 +262,10 @@ func (set IntervalSet) Subtract(iv IntegerInterval) IntervalSet {
 //
 //	a = {[0,2), [5,6)}
 //	b = {[1,4), [6,8)}
-//	result = {[0,4), [5,8)} → Normalize ⇒ {[0,8)}
+//
+// combined = {[0,4), [5,8), [1,4), [6,8)}
+//
+//	result = {[0,4), [5,8)}
 //
 // Union(set') = Normalize(set ∪ set')
 func (set IntervalSet) Union(other IntervalSet) IntervalSet {
